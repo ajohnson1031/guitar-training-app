@@ -1,12 +1,10 @@
 import { chords } from "@tombatossals/chords-db/lib/guitar.json";
-import GuitarNeck from "./components/GuitarNeck";
+import ChordTrainer from "./components/ChordTrainer";
 
 function App() {
-  const firstChord = chords.A[0];
-
   return (
     <div className="w-full h-full flex items-center">
-      <GuitarNeck chord={firstChord} />
+      <ChordTrainer chordList={chords.A} bpm={60} />
     </div>
   );
 }

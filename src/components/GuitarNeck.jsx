@@ -1,45 +1,53 @@
 import { Fretboard } from "@moonwave99/fretboard.js";
 import { useEffect, useRef } from "react";
-import { getNoteName, NOTE_COLORS } from "../utils";
+import { getChordString, getNoteLabels, NOTE_COLORS } from "../utils";
 
-const GuitarNeck = ({ chord, tuning = ["E", "A", "D", "G", "B", "E"] }) => {
+const GuitarNeck = ({ chord, tuning = ["E", "A", "D", "G", "B", "E"], label }) => {
   const fretboardRef = useRef(null);
   const containerRef = useRef(null);
 
   useEffect(() => {
+    if (!chord || !chord.frets) return;
+
     if (!fretboardRef.current && containerRef.current) {
       fretboardRef.current = new Fretboard({
-        el: ".guitar-neck",
+        el: containerRef.current,
         tuning,
-        dotSize: 20,
+        dotSize: 24,
+        baseFret: chord.baseFret || 1,
+        fretCount: 5,
+        showFretNumbers: true,
+        crop: true,
+        barresColor: "#ccc",
       });
     }
 
-    const chordFrets = chord.positions[0].frets
-      .map((fret, index) => {
-        if (fret === -1) return null;
-        const openNote = tuning[index];
-        const note = getNoteName(openNote, fret);
-        return {
-          string: index + 1,
-          fret,
-          note,
-        };
-      })
-      .filter(Boolean);
+    const chordString = getChordString(chord.frets);
+    const labels = getNoteLabels(chord.frets, tuning);
 
-    fretboardRef.current
-      .setDots(chordFrets)
-      .render()
-      .style({ text: ({ note }) => note, fill: ({ note }) => NOTE_COLORS[note] });
+    const barres = (chord.barres || []).map((fret) => ({
+      fret,
+      fromString: 6,
+      toString: 1,
+    }));
+
+    // Render the chord and immediately style the dots
+    fretboardRef.current.renderChord(chordString, barres).style({
+      text: (_, i) => labels[i] ?? "",
+      fill: (_, i) => {
+        const note = labels[i];
+        return note ? NOTE_COLORS[note] : "#ccc";
+      },
+    });
   }, [chord]);
 
   return (
     <div className="flex flex-col w-full h-fit items-center">
-      <div className="flex justify-center text-xl font-semibold gap-1">
-        <p>{chord.key}</p>
-        <p>{chord.suffix} Chord</p>
-      </div>
+      {label && (
+        <div className="flex justify-center text-xl font-semibold gap-1">
+          <p>{label}</p>
+        </div>
+      )}
       <figure ref={containerRef} className="guitar-neck w-3/4 h-fit" />
     </div>
   );
